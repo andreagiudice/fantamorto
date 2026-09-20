@@ -33,9 +33,9 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 </head>
 <body>
 <h1>⚰️ FANTAMORTO ROMA 2025</h1>
-<div class="sub">Ogni squadra schiera 6 personaggi, uno per ruolo. Punti = (100 − età alla morte) × moltiplicatore.</div>
+<div class="sub" style="display:none">Ogni squadra schiera 6 personaggi, uno per ruolo. Punti = (100 − età alla morte) × moltiplicatore.</div>
 
-<div class="box">
+<div class="box" style="display:none">
   <div class="row">
     <input id="tname" placeholder="Nome della tua squadra">
     <button id="add" style="flex:0 0 auto">Crea squadra</button>
@@ -52,9 +52,9 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 /* ====== INCOLLA QUI I TUOI DUE VALORI DI SUPABASE ====== */
-const SUPABASE_URL = "https://slddeienezzvgyanmjrz.supabase.co";
+const SUPABASE_URL = "https://slddeienezzvgyanmjrz.supabase.co/rest/v1/";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsZGRlaWVuZXp6dmd5YW5tanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTc1OTIsImV4cCI6MjEwNTQ3MzU5Mn0.tt8_iowU1hzsq2ikRKAQV2k3nDgK7-q5IqB8pLh-6po";
-/* ======================================================= */
+/* ======================================================= *//
 
 const ROLES=[
  {k:"capitano",n:"Capitano",c:"Nessuna condizione",m:3,col:"#c9a227",bg:"#f6efdc"},
