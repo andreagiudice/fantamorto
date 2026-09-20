@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fantamorto Roma 2025</title>
 <style>
-:root{box-sizing:border-box;--bg:#efe6f7;--card:#fff;--tx:#2b2233;--mut:#6d6379;--line:#d9cfe4}
-@media (prefers-color-scheme:dark){:root{--bg:#1b1720;--card:#26212e;--tx:#f2ecf7;--mut:#a79bb5;--line:#3a3344}}
+:root{box-sizing:border-box;--bg:#2a1f42;--bg2:#3a2a5c;--card:#241a3a;--tx:#f4eefb;--mut:#b6a8d1;--line:#4d3c72;--gold:#e8c34a}
+@media (prefers-color-scheme:light){:root{--bg:#e9defa;--bg2:#f3ecff;--card:#ffffff;--tx:#2b2233;--mut:#6d6379;--line:#d9cfe4}}
 *{box-sizing:border-box}
-body{margin:0 auto;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px;max-width:760px}
-h1{font-size:1.5rem;margin:.2em 0;letter-spacing:.5px}
+body{margin:0 auto;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px;max-width:640px;min-height:100vh}
+h1{font-size:1.6rem;margin:.1em 0 .05em;letter-spacing:1px;text-align:center;font-weight:800}
+.tagline{text-align:center;color:var(--mut);font-size:.8rem;margin-bottom:20px;letter-spacing:.5px;text-transform:uppercase}
 h2{font-size:1.05rem;margin:1.4em 0 .5em}
-.sub{color:var(--mut);font-size:.85rem;margin-bottom:18px}
 .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
 input,button{font:inherit;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--tx)}
 input{width:100%;margin:4px 0}
-button{cursor:pointer;background:#6c4bb6;color:#fff;border:none;font-weight:600}
+button{cursor:pointer;background:#8b5fd6;color:#fff;border:none;font-weight:600}
 button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);font-weight:500;padding:4px 8px;font-size:.8rem}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row>*{flex:1 1 130px}
@@ -24,15 +24,22 @@ button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);
 .role .cond{font-size:.72rem;opacity:.7}
 .pick{margin-top:6px;font-weight:600}
 .dead{text-decoration:line-through;opacity:.65}
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-td{text-align:left;padding:6px;border-bottom:1px solid var(--line)}
-td.n{text-align:right;font-variant-numeric:tabular-nums}
 .tag{font-size:.75rem;color:var(--mut)}
 .wrap{overflow-x:auto}
+
+.lbcard{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:transform .1s}
+.lbcard:active{transform:scale(.98)}
+.rank{width:26px;text-align:center;font-weight:800;color:var(--mut);flex:0 0 auto}
+.rank.gold{color:var(--gold);font-size:1.2rem}
+.avatar{width:52px;height:52px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;color:#fff;border:2px solid rgba(255,255,255,.25)}
+.lbname{flex:1 1 auto;font-weight:700;font-size:1.02rem}
+.lbpts{font-weight:800;font-size:1.15rem;color:var(--gold)}
+.lbpts small{display:block;font-size:.62rem;font-weight:500;color:var(--mut);text-align:right}
 </style>
 </head>
 <body>
 <h1>⚰️ FANTAMORTO ROMA 2025</h1>
+<div class="tagline">Classifica squadre</div>
 <div class="tag" id="status" style="display:none;margin-bottom:10px"></div>
 
 <div class="box" id="addBox" style="display:none">
@@ -43,7 +50,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 </div>
 
 <div id="listView">
-  <div class="box wrap"><table id="lb"></table></div>
+  <div id="lb"></div>
 </div>
 
 <div id="detailView" style="display:none">
@@ -75,17 +82,31 @@ const tot=t=>ROLES.reduce((s,r)=>s+pOf(r,(t.picks||{})[r.k]),0);
 
 let openTeam=null;
 
+const AVATAR_COLORS=["#c9a227","#3b6ea5","#5a9bd4","#b5537a","#6b6b6b","#d2762b","#4c9a7a","#8b5fd6","#c0503f"];
+function colorFor(name){ let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))>>>0; return AVATAR_COLORS[h%AVATAR_COLORS.length]; }
+const MEDALS=["🥇","🥈","🥉"];
+
 function renderList(){
   const lb=[...teams].sort((a,b)=>tot(b)-tot(a));
-  $("#lb").innerHTML=lb.length?lb.map((t,i)=>
-    `<tr class="teamrow" data-open="${t.id}" style="cursor:pointer"><td>${i+1}</td><td>${esc(t.name)}</td><td class="n"><b>${tot(t)}</b></td></tr>`).join("")
-    :"<tr><td>Nessuna squadra ancora.</td></tr>";
+  $("#lb").innerHTML=lb.length?lb.map((t,i)=>{
+    const initials=esc(t.name).slice(0,2).toUpperCase();
+    const rank=i<3?`<span class="rank gold">${MEDALS[i]}</span>`:`<span class="rank">${i+1}</span>`;
+    return `<div class="lbcard" data-open="${t.id}">
+      ${rank}
+      <div class="avatar" style="background:${colorFor(t.name)}">${initials}</div>
+      <div class="lbname">${esc(t.name)}</div>
+      <div class="lbpts">${tot(t)}<small>punti</small></div>
+    </div>`;
+  }).join("")
+    :`<div class="box" style="text-align:center;color:var(--mut)">Nessuna squadra ancora.</div>`;
 }
 
 function renderDetail(id){
   const t=teams.find(x=>x.id===id);
   if(!t){ showList(); return; }
-  $("#teamDetail").innerHTML=`<div class="box"><div class="row"><h2 style="margin:0">${esc(t.name)} — ${tot(t)} pt</h2>
+  $("#teamDetail").innerHTML=`<div class="box"><div class="row" style="align-items:center">
+    <div class="avatar" style="background:${colorFor(t.name)};flex:0 0 auto">${esc(t.name).slice(0,2).toUpperCase()}</div>
+    <h2 style="margin:0;flex:1 1 auto">${esc(t.name)} — ${tot(t)} pt</h2>
     <button class="sec" style="flex:0 0 auto" data-del="${t.id}">Elimina</button></div>`+
     ROLES.map(r=>{const p=(t.picks||{})[r.k]||{};return `<div class="role" style="border-color:${r.col};background:${r.bg}">
       <h3 style="color:${r.col}">${r.n} ×${r.m}</h3><div class="cond">${r.c}</div>
