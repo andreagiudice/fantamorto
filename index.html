@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fantamorto Roma 2025</title>
+<style>
+:root{box-sizing:border-box;--bg:#efe6f7;--card:#fff;--tx:#2b2233;--mut:#6d6379;--line:#d9cfe4}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1720;--card:#26212e;--tx:#f2ecf7;--mut:#a79bb5;--line:#3a3344}}
+*{box-sizing:border-box}
+body{margin:0 auto;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px;max-width:760px}
+h1{font-size:1.5rem;margin:.2em 0;letter-spacing:.5px}
+h2{font-size:1.05rem;margin:1.4em 0 .5em}
+.sub{color:var(--mut);font-size:.85rem;margin-bottom:18px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+input,button{font:inherit;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--tx)}
+input{width:100%;margin:4px 0}
+button{cursor:pointer;background:#6c4bb6;color:#fff;border:none;font-weight:600}
+button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);font-weight:500;padding:4px 8px;font-size:.8rem}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1 1 130px}
+.role{border-radius:12px;padding:10px 12px;margin:8px 0;border:2px solid;color:#2b2233}
+.role h3{margin:0 0 2px;font-size:.8rem;text-transform:uppercase;letter-spacing:1px}
+.role .cond{font-size:.72rem;opacity:.7}
+.pick{margin-top:6px;font-weight:600}
+.dead{text-decoration:line-through;opacity:.65}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+td{text-align:left;padding:6px;border-bottom:1px solid var(--line)}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.tag{font-size:.75rem;color:var(--mut)}
+.wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<h1>⚰️ FANTAMORTO ROMA 2025</h1>
+<div class="sub">Ogni squadra schiera 6 personaggi, uno per ruolo. Punti = (100 − età alla morte) × moltiplicatore.</div>
+
+<div class="box">
+  <div class="row">
+    <input id="tname" placeholder="Nome della tua squadra">
+    <button id="add" style="flex:0 0 auto">Crea squadra</button>
+  </div>
+  <div class="tag" id="status">Connessione…</div>
+</div>
+
+<h2>Classifica</h2>
+<div class="box wrap"><table id="lb"></table></div>
+
+<h2>Squadre</h2>
+<div id="teams"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ====== INCOLLA QUI I TUOI DUE VALORI DI SUPABASE ====== */
+const SUPABASE_URL = "https://slddeienezzvgyanmjrz.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsZGRlaWVuZXp6dmd5YW5tanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTc1OTIsImV4cCI6MjEwNTQ3MzU5Mn0.tt8_iowU1hzsq2ikRKAQV2k3nDgK7-q5IqB8pLh-6po";
+/* ======================================================= */
+
+const ROLES=[
+ {k:"capitano",n:"Capitano",c:"Nessuna condizione",m:3,col:"#c9a227",bg:"#f6efdc"},
+ {k:"patriota",n:"Patriota",c:"Italiano · Over 68",m:2,col:"#3b6ea5",bg:"#dce8f5"},
+ {k:"giovane",n:"Così giovane!",c:"Under 40",m:2,col:"#5a9bd4",bg:"#dceaf7"},
+ {k:"ritardo",n:"Scusate il ritardo",c:"Over 90",m:2,col:"#6b6b6b",bg:"#e2e2e2"},
+ {k:"rosa",n:"Quota rosa",c:"Donna",m:1,col:"#b5537a",bg:"#f4dde7"},
+ {k:"ohno",n:"Oh Noooo",c:"Augurato dal profondo del cuore",m:1,col:"#d2762b",bg:"#fae2cd"}
+];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+let sb=null, teams=[];
+
+const pOf=(r,p)=>(!p||!p.dead||p.age===""||p.age==null)?0:Math.max(0,100-Number(p.age))*r.m;
+const tot=t=>ROLES.reduce((s,r)=>s+pOf(r,(t.picks||{})[r.k]),0);
+
+function render(){
+  const lb=[...teams].sort((a,b)=>tot(b)-tot(a));
+  $("#lb").innerHTML=lb.length?lb.map((t,i)=>
+    `<tr><td>${i+1}</td><td>${esc(t.name)}</td><td class="n"><b>${tot(t)}</b></td></tr>`).join("")
+    :"<tr><td>Nessuna squadra ancora.</td></tr>";
+
+  $("#teams").innerHTML=teams.map(t=>`<div class="box"><div class="row"><h2 style="margin:0">${esc(t.name)} — ${tot(t)} pt</h2>
+    <button class="sec" style="flex:0 0 auto" data-del="${t.id}">Elimina</button></div>`+
+    ROLES.map(r=>{const p=(t.picks||{})[r.k]||{};return `<div class="role" style="border-color:${r.col};background:${r.bg}">
+      <h3 style="color:${r.col}">${r.n} ×${r.m}</h3><div class="cond">${r.c}</div>
+      <div class="pick ${p.dead?"dead":""}">${p.name?esc(p.name):"<i style='opacity:.5'>libero</i>"} ${p.dead?"† "+p.age+" anni · "+pOf(r,p)+" pt":""}</div>
+      <div class="row" style="margin-top:6px">
+        <input placeholder="Personaggio" value="${p.name?esc(p.name):""}" data-t="${t.id}" data-r="${r.k}" data-f="name">
+        <input type="number" placeholder="Età" value="${p.age!=null?p.age:""}" data-t="${t.id}" data-r="${r.k}" data-f="age" style="flex:0 0 80px">
+        <button class="sec" style="flex:0 0 auto" data-dead="${t.id}|${r.k}">${p.dead?"↩︎ Vivo":"✝ Morto"}</button>
+      </div></div>`}).join("")+"</div>").join("");
+}
+
+async function save(t){
+  if(!sb) return;
+  const {error}=await sb.from("teams").upsert({id:t.id,name:t.name,picks:t.picks||{}});
+  if(error) $("#status").textContent="Errore salvataggio: "+error.message;
+}
+async function load(){
+  const {data,error}=await sb.from("teams").select("*");
+  if(error){$("#status").textContent="Errore: "+error.message;return}
+  teams=data||[]; render();
+}
+
+document.addEventListener("click",async e=>{
+  const d=e.target.dataset;
+  if(d.del){ teams=teams.filter(x=>x.id!==d.del); render(); if(sb) await sb.from("teams").delete().eq("id",d.del); }
+  if(d.dead){ const[id,rk]=d.dead.split("|"); const t=teams.find(x=>x.id===id);
+    t.picks=t.picks||{}; t.picks[rk]=t.picks[rk]||{name:"",age:""}; t.picks[rk].dead=!t.picks[rk].dead; render(); save(t); }
+});
+document.addEventListener("change",e=>{
+  const d=e.target.dataset; if(!d.t)return;
+  const t=teams.find(x=>x.id===d.t); t.picks=t.picks||{}; t.picks[d.r]=t.picks[d.r]||{name:"",age:""};
+  t.picks[d.r][d.f]=e.target.value; render(); save(t);
+});
+$("#add").onclick=()=>{const n=$("#tname").value.trim(); if(!n)return;
+  const t={id:"t"+Date.now()+Math.floor(Math.random()*999),name:n,picks:{}};
+  teams.push(t); $("#tname").value=""; render(); save(t);};
+
+render();
+try{
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  load().then(()=>$("#status").textContent="Collegato: tutti vedono gli stessi dati.");
+  sb.channel("teams-live").on("postgres_changes",{event:"*",schema:"public",table:"teams"},load).subscribe();
+}catch(e){ $("#status").textContent="Supabase non configurato: controlla URL e chiave."; }
+</script>
+</body>
+</html>
