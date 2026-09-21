@@ -38,8 +38,16 @@ button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);
 </style>
 </head>
 <body>
-<h1>⚰️ FANTAMORTO ROMA 2025</h1>
+<h1>⚰️ FANTAMORTO ROMA</h1>
 <div class="tagline">Classifica squadre</div>
+
+<div class="row" style="max-width:220px;margin:0 auto 16px">
+  <select id="edition">
+    <option value="2025">Edizione 2025</option>
+    <option value="2026">Edizione 2026</option>
+  </select>
+</div>
+
 <div class="tag" id="status" style="display:none;margin-bottom:10px"></div>
 
 <div class="box" id="addBox" style="display:none">
@@ -75,12 +83,10 @@ const ROLES=[
 ];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
-let sb=null, teams=[], people={};
+let sb=null, teams=[];
 
-const pkey=n=>(n||"").trim().toLowerCase();
-function personOf(name){ return people[pkey(name)] || {name:name||"", age:"", dead:false}; }
-const pOf=(r,name)=>{ const p=personOf(name); return (!p.dead||p.age===""||p.age==null)?0:Math.max(0,100-Number(p.age))*r.m; };
-const tot=t=>ROLES.reduce((s,r)=>s+pOf(r,(t.picks||{})[r.k]&&(t.picks||{})[r.k].name),0);
+const pOf=(r,p)=>(!p||!p.dead||p.age===""||p.age==null)?0:Math.max(0,100-Number(p.age))*r.m;
+const tot=t=>ROLES.reduce((s,r)=>s+pOf(r,(t.picks||{})[r.k]),0);
 
 let openTeam=null;
 
@@ -88,8 +94,12 @@ const AVATAR_COLORS=["#c9a227","#3b6ea5","#5a9bd4","#b5537a","#6b6b6b","#d2762b"
 function colorFor(name){ let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))>>>0; return AVATAR_COLORS[h%AVATAR_COLORS.length]; }
 const MEDALS=["🥇","🥈","🥉"];
 
+let currentEdition=localStorage.getItem("fm_edition")||"2025";
+
+function teamsInEdition(){ return teams.filter(t=>(t.edition||"2025")===currentEdition); }
+
 function renderList(){
-  const lb=[...teams].sort((a,b)=>tot(b)-tot(a));
+  const lb=teamsInEdition().sort((a,b)=>tot(b)-tot(a));
   $("#lb").innerHTML=lb.length?lb.map((t,i)=>{
     const initials=esc(t.name).slice(0,2).toUpperCase();
     const rank=i<3?`<span class="rank gold">${MEDALS[i]}</span>`:`<span class="rank">${i+1}</span>`;
@@ -133,7 +143,7 @@ function clearError(){ const s=$("#status"); s.style.display="none"; }
 
 async function save(t){
   if(!sb) return;
-  const {error}=await sb.from("teams").upsert({id:t.id,name:t.name,picks:t.picks||{}});
+  const {error}=await sb.from("teams").upsert({id:t.id,name:t.name,edition:t.edition||"2025",picks:t.picks||{}});
   if(error) showError("Errore salvataggio: "+error.message); else clearError();
 }
 async function load(){
@@ -156,11 +166,18 @@ document.addEventListener("change",e=>{
   const t=teams.find(x=>x.id===d.t); t.picks=t.picks||{}; t.picks[d.r]=t.picks[d.r]||{name:"",age:""};
   t.picks[d.r][d.f]=e.target.value; render(); save(t);
 });
+function applyEdition(){
+  $("#edition").value=currentEdition;
+  $("#addBox").style.display=currentEdition==="2026"?"":"none";
+  render();
+}
+$("#edition").onchange=e=>{ currentEdition=e.target.value; localStorage.setItem("fm_edition",currentEdition); showList(); applyEdition(); };
+
 $("#add").onclick=()=>{const n=$("#tname").value.trim(); if(!n)return;
-  const t={id:"t"+Date.now()+Math.floor(Math.random()*999),name:n,picks:{}};
+  const t={id:"t"+Date.now()+Math.floor(Math.random()*999),name:n,edition:currentEdition,picks:{}};
   teams.push(t); $("#tname").value=""; render(); save(t);};
 
-render();
+applyEdition();
 try{
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
   load();
