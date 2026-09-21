@@ -35,13 +35,23 @@ button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);
 .lbname{flex:1 1 auto;font-weight:700;font-size:1.02rem}
 .lbpts{font-weight:800;font-size:1.15rem;color:var(--gold)}
 .lbpts small{display:block;font-size:.62rem;font-weight:500;color:var(--mut);text-align:right}
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:18px}
+.tabbtn{padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--mut);font-weight:700;cursor:pointer}
+.tabbtn.active{background:#8b5fd6;color:#fff;border-color:#8b5fd6}
+.rules h3{margin:1.1em 0 .2em}
+.rules p{margin:.2em 0;color:var(--mut);font-size:.92rem}
 </style>
 </head>
 <body>
 <h1>⚰️ FANTAMORTO ROMA</h1>
 <div class="tagline">Classifica squadre</div>
 
-<div class="row" style="max-width:220px;margin:0 auto 16px">
+<div class="tabs">
+  <button class="tabbtn active" id="tabLB">Classifica</button>
+  <button class="tabbtn" id="tabRules">Regolamento</button>
+</div>
+
+<div class="row" style="max-width:220px;margin:0 auto 16px" id="editionWrap">
   <select id="edition">
     <option value="2025">Edizione 2025</option>
     <option value="2026">Edizione 2026</option>
@@ -65,6 +75,8 @@ button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);
   <button class="sec" id="back" style="margin-bottom:10px">← Classifica</button>
   <div id="teamDetail"></div>
 </div>
+
+<div id="rulesView" class="box rules" style="display:none"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -166,7 +178,26 @@ document.addEventListener("change",e=>{
   const t=teams.find(x=>x.id===d.t); t.picks=t.picks||{}; t.picks[d.r]=t.picks[d.r]||{name:"",age:""};
   t.picks[d.r][d.f]=e.target.value; render(); save(t);
 });
-function applyEdition(){
+function renderRules(){
+  $("#rulesView").innerHTML=`
+    <h2 style="margin-top:0">Regolamento</h2>
+    <p>Ogni squadra schiera 6 personaggi, uno per ruolo. Ogni ruolo ha una condizione da rispettare e un moltiplicatore.</p>
+    <p><b>Punteggio:</b> quando un personaggio muore, la squadra guadagna (100 − età alla morte) × moltiplicatore del ruolo.</p>
+    ${ROLES.map(r=>`<h3 style="color:${r.col}">${r.n} — ×${r.m}</h3><p>${r.c}</p>`).join("")}
+  `;
+}
+
+function setTab(tab){
+  const lb=tab==="lb";
+  $("#tabLB").classList.toggle("active",lb);
+  $("#tabRules").classList.toggle("active",!lb);
+  $("#editionWrap").style.display=lb?"":"none";
+  $("#addBox").style.display=lb&&currentEdition==="2026"?"":"none";
+  $("#rulesView").style.display=lb?"none":"";
+  if(lb){ showList(); } else { $("#listView").style.display="none"; $("#detailView").style.display="none"; renderRules(); }
+}
+$("#tabLB").onclick=()=>setTab("lb");
+$("#tabRules").onclick=()=>setTab("rules");
   $("#edition").value=currentEdition;
   $("#addBox").style.display=currentEdition==="2026"?"":"none";
   render();
@@ -178,6 +209,7 @@ $("#add").onclick=()=>{const n=$("#tname").value.trim(); if(!n)return;
   teams.push(t); $("#tname").value=""; render(); save(t);};
 
 applyEdition();
+setTab("lb");
 try{
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
   load();
@@ -185,9 +217,9 @@ try{
 }catch(e){ showError("Supabase non configurato: controlla URL e chiave."); }
 </script>
 <footer style="text-align:center;margin-top:32px;padding:16px 0 8px;color:var(--mut);font-size:.75rem;line-height:1.6;border-top:1px solid var(--line)">
-  Fantamorto Roma 2025 · Regole a cura di Emanuele & Marco<br>
-  App creata dal Giaguaro<br>
-  💀
+  Fantamorto Roma 2025 · Regole a cura del gruppo<br>
+  App creata con l'aiuto di Claude<br>
+  Che vinca il migliore (o il più spietato) 💀
 </footer>
 
 </body>
