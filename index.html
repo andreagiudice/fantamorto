@@ -198,6 +198,8 @@ function setTab(tab){
 }
 $("#tabLB").onclick=()=>setTab("lb");
 $("#tabRules").onclick=()=>setTab("rules");
+
+function applyEdition(){
   $("#edition").value=currentEdition;
   $("#addBox").style.display=currentEdition==="2026"?"":"none";
   render();
@@ -217,9 +219,9 @@ try{
 }catch(e){ showError("Supabase non configurato: controlla URL e chiave."); }
 </script>
 <footer style="text-align:center;margin-top:32px;padding:16px 0 8px;color:var(--mut);font-size:.75rem;line-height:1.6;border-top:1px solid var(--line)">
-  Fantamorto Roma 2025 · Regole a cura del gruppo<br>
-  App creata con l'aiuto di Claude<br>
-  Che vinca il migliore (o il più spietato) 💀
+  Fantamorto Roma 2025 · Regole a cura di Emanuele & Marco<br>
+  App creata dal Giaguaro<br>
+  💀
 </footer>
 
 </body>
