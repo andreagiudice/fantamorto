@@ -75,10 +75,12 @@ const ROLES=[
 ];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
-let sb=null, teams=[];
+let sb=null, teams=[], people={};
 
-const pOf=(r,p)=>(!p||!p.dead||p.age===""||p.age==null)?0:Math.max(0,100-Number(p.age))*r.m;
-const tot=t=>ROLES.reduce((s,r)=>s+pOf(r,(t.picks||{})[r.k]),0);
+const pkey=n=>(n||"").trim().toLowerCase();
+function personOf(name){ return people[pkey(name)] || {name:name||"", age:"", dead:false}; }
+const pOf=(r,name)=>{ const p=personOf(name); return (!p.dead||p.age===""||p.age==null)?0:Math.max(0,100-Number(p.age))*r.m; };
+const tot=t=>ROLES.reduce((s,r)=>s+pOf(r,(t.picks||{})[r.k]&&(t.picks||{})[r.k].name),0);
 
 let openTeam=null;
 
@@ -165,5 +167,11 @@ try{
   sb.channel("teams-live").on("postgres_changes",{event:"*",schema:"public",table:"teams"},load).subscribe();
 }catch(e){ showError("Supabase non configurato: controlla URL e chiave."); }
 </script>
+<footer style="text-align:center;margin-top:32px;padding:16px 0 8px;color:var(--mut);font-size:.75rem;line-height:1.6;border-top:1px solid var(--line)">
+  Fantamorto Roma 2025 · Regole a cura di Emanuele & Marco<br>
+  App creata dal Giaguaro<br>
+  💀
+</footer>
+
 </body>
 </html>
