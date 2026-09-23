@@ -48,6 +48,7 @@ button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);
 
 <div class="tabs">
   <button class="tabbtn active" id="tabLB">Classifica</button>
+  <button class="tabbtn" id="tabSearch">🔍 Cerca</button>
   <button class="tabbtn" id="tabRules">Regolamento</button>
 </div>
 
@@ -67,16 +68,16 @@ button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);
   </div>
 </div>
 
-<div class="box" id="searchBox">
+<div id="listView">
+  <div id="lb"></div>
+</div>
+
+<div id="searchView" class="box" style="display:none">
   <div class="row">
     <input id="searchInput" placeholder="Cerca un personaggio (nome e/o cognome)">
     <button id="searchBtn" style="flex:0 0 auto">Cerca</button>
   </div>
   <div id="searchResult" style="margin-top:8px"></div>
-</div>
-
-<div id="listView">
-  <div id="lb"></div>
 </div>
 
 <div id="detailView" style="display:none">
@@ -221,15 +222,20 @@ function renderRules(){
 }
 
 function setTab(tab){
-  const lb=tab==="lb";
-  $("#tabLB").classList.toggle("active",lb);
-  $("#tabRules").classList.toggle("active",!lb);
-  $("#editionWrap").style.display=lb?"":"none";
-  $("#addBox").style.display=lb&&currentEdition==="2026"?"":"none";
-  $("#rulesView").style.display=lb?"none":"";
-  if(lb){ showList(); } else { $("#listView").style.display="none"; $("#detailView").style.display="none"; renderRules(); }
+  $("#tabLB").classList.toggle("active",tab==="lb");
+  $("#tabSearch").classList.toggle("active",tab==="search");
+  $("#tabRules").classList.toggle("active",tab==="rules");
+  $("#editionWrap").style.display=tab==="lb"?"":"none";
+  $("#addBox").style.display=tab==="lb"&&currentEdition==="2026"?"":"none";
+  $("#searchView").style.display=tab==="search"?"":"none";
+  $("#rulesView").style.display=tab==="rules"?"":"none";
+  $("#detailView").style.display="none";
+  if(tab==="lb"){ showList(); }
+  else{ $("#listView").style.display="none"; openTeam=null; }
+  if(tab==="rules") renderRules();
 }
 $("#tabLB").onclick=()=>setTab("lb");
+$("#tabSearch").onclick=()=>setTab("search");
 $("#tabRules").onclick=()=>setTab("rules");
 
 function applyEdition(){
