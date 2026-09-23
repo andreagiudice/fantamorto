@@ -67,6 +67,14 @@ button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);
   </div>
 </div>
 
+<div class="box" id="searchBox">
+  <div class="row">
+    <input id="searchInput" placeholder="Cerca un personaggio (nome e/o cognome)">
+    <button id="searchBtn" style="flex:0 0 auto">Cerca</button>
+  </div>
+  <div id="searchResult" style="margin-top:8px"></div>
+</div>
+
 <div id="listView">
   <div id="lb"></div>
 </div>
@@ -141,6 +149,31 @@ function renderDetail(id){
         <button class="sec" style="flex:0 0 auto" data-dead="${t.id}|${r.k}">${p.dead?"↩︎ Vivo":"✝ Morto"}</button>
       </div></div>`}).join("")+"</div>";
 }
+
+function runSearch(){
+  const q=$("#searchInput").value.trim().toLowerCase();
+  const box=$("#searchResult");
+  if(!q){ box.innerHTML=""; return; }
+  const hits=[];
+  teams.forEach(t=>{
+    ROLES.forEach(r=>{
+      const p=(t.picks||{})[r.k];
+      if(p && p.name && p.name.toLowerCase().includes(q)){
+        hits.push({team:t.name, edition:t.edition||"2025", role:r.n, col:r.col, personName:p.name, dead:!!p.dead});
+      }
+    });
+  });
+  if(!hits.length){
+    box.innerHTML=`<div class="tag" style="color:#c0392b">Nessuna squadra ha scelto un personaggio che corrisponde a "${esc($("#searchInput").value.trim())}".</div>`;
+    return;
+  }
+  box.innerHTML=hits.map(h=>
+    `<div class="role" style="border-color:${h.col};background:transparent;color:var(--tx);margin:6px 0">
+      <b>${esc(h.personName)}</b> ${h.dead?"† ":""}è in <b>${esc(h.team)}</b> (edizione ${h.edition}) — ruolo ${h.role}
+    </div>`).join("");
+}
+$("#searchBtn").onclick=runSearch;
+$("#searchInput").addEventListener("keydown",e=>{ if(e.key==="Enter") runSearch(); });
 
 function showList(){ openTeam=null; $("#listView").style.display=""; $("#detailView").style.display="none"; renderList(); }
 function showDetail(id){ openTeam=id; $("#listView").style.display="none"; $("#detailView").style.display=""; renderDetail(id); }
